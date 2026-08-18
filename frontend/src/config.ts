@@ -1,3 +1,9 @@
 export const APP_NAME = "StockFlow WMS";
-// In production (Vercel), set VITE_API_URL to your backend Vercel URL e.g. https://ware-house-api.vercel.app/api
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api";
+
+// In development, Vite dev server proxies /api to http://127.0.0.1:8000/api.
+// In production on Vercel, requests to /api are handled by the serverless backend via vercel.json.
+// If VITE_API_URL is explicitly set (e.g. separate backend deployment), use it.
+export const API_BASE_URL: string =
+  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ||
+  (import.meta.env.DEV ? "http://localhost:8000/api" : "/api");
+
