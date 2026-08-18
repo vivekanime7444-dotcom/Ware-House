@@ -10,7 +10,14 @@
     },
     {
       "src": "backend/api/index.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": [
+          "backend/app/**",
+          "backend/wms.db",
+          "backend/requirements.txt"
+        ]
+      }
     }
   ],
   "routes": [
@@ -27,4 +34,5 @@
     }
   ]
 }
+
 
