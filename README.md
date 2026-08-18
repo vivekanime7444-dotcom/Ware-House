@@ -1,69 +1,108 @@
-# Virtual Physics Prototyping Simulator (PhysiLab 3D)
+# StockFlow WMS — Enterprise Warehouse Management System
 
-A complete, working, browser-based **Virtual Physics Prototyping Simulator** built with **React**, **TypeScript**, **Vite**, **Three.js**, **Rapier 3D WASM**, **Tailwind CSS**, and **FastAPI**.
+A high-performance, full-stack enterprise **Warehouse Management System (WMS)** built with **React 19**, **TypeScript**, **Tailwind CSS v4**, **FastAPI**, **SQLAlchemy**, and **SQLite/PostgreSQL**.
 
-Allows users to construct virtual prototypes using 3D primitives and mechanical components, assign physical and material properties (Steel, Aluminium, Copper, Rubber, Wood, Ice, Custom), connect objects with springs and joints, apply vector forces and motor torques, run rigid-body physics simulations, inspect numerical telemetry, view real-time energy graphs, save/load projects, export JSON/CSV data, and run AI-assisted simulation diagnostics.
-
----
-
-## 🌟 Key Features
-
-1. **3D Interactive Workspace**:
-   - Three.js WebGL viewport with OrbitControls, Transform Gizmos (Translate `G`, Rotate `R`, Scale `S`, Select `V`), shadow rendering, and object raycasting selection.
-   - Component library for 3D primitives (Cube, Sphere, Cylinder, Capsule, Plane, Cone) and mechanical parts (Structural Beam, Cylindrical Rod, Wheel Disc).
-2. **60 FPS Rigid-Body Physics Engine**:
-   - Powered by `@dimforge/rapier3d-compat` (Rapier 3D WASM).
-   - Simulates gravity, rigid bodies, colliders, friction coefficients, restitution/bounciness, forces, impulses, torques, Hooke springs ($F = -k(x - L_0) - c v$), and joint constraints (Fixed welds, Hinge rotational axles).
-3. **Live Dynamics & Telemetry Graphs**:
-   - Mechanical energy calculation: Kinetic Energy ($KE = \frac{1}{2} m v^2$), Potential Energy ($PE = m g h$), and Total Mechanical Energy ($E = KE + PE$).
-   - Real-time line charts using Recharts for Energy, Velocity, and Displacement vs. Time.
-   - Real-time Collision Log table with contact event logging.
-4. **Preset Physics Scenarios**:
-   - 1: Falling Ball & Bouncing Collision
-   - 2: Sliding Block with Kinetic Friction Deceleration
-   - 3: Projectile Launch Parabolic Trajectory
-   - 4: Harmonic Spring Mass Oscillator
-   - 5: Vehicle Axle & Wheel Rotational Drive
-5. **AI Simulation Diagnostics**:
-   - AI analysis endpoint evaluating assembly telemetry, speed spikes, out-of-bounds drops, and providing structured design improvement suggestions with safety disclaimers.
-   - Includes deterministic fallback rule-based diagnostic engine.
-6. **Project Persistence & Export**:
-   - FastAPI REST API + SQLite/PostgreSQL persistence.
-   - Offline localStorage fallback when running standalone.
-   - Downloadable JSON project configuration and CSV telemetry logs.
+StockFlow WMS delivers comprehensive inventory tracking, stock replenishment, dynamic order prioritization, physical verification with damaged/missing item detection and replacement, and real-time business intelligence analytics.
 
 ---
 
-## 📁 Repository Structure
+## 🌟 Key Functional Modules
+
+1. **Dashboard Hub (4×2 Matrix View)**:
+   - 3D cursor-perspective tilt cards providing instant telemetry for Total Inventory, Physical Units, Low Stock Threshold Alerts, Pending Orders, Ready Shipments, and Damaged/Missing Discrepancies.
+2. **Central Inventory Module**:
+   - Live available stock view with category filtering, real-time keyword search, stock status badges (`IN STOCK`, `LOW STOCK`, `OUT OF STOCK`), and quantity counters.
+3. **Warehouse Status & SKU Management**:
+   - Complete catalog audit, real-time product registration modal with threshold alerts, and obsolete SKU deletion for low-demand items.
+4. **Restocking & Replenishment**:
+   - Physical stock injection workflow with instant recalculation of available quantities, status updates, and audit trail logging.
+5. **Order Placement**:
+   - Customer order creation interface with direct numerical quantity inputs and real-time availability validation.
+6. **Orders Prioritization Queue**:
+   - Smart order fulfillment sorting based on available stock ratios, status progression (`PENDING` -> `ACCEPTED` -> `PROCESSING` -> `SHIPPED`), and category breakdown.
+7. **Order Placement & Tracking (Verification)**:
+   - Quality inspection table verifying item conditions (`Good`, `Damaged`, `Missing`), discrepancy auditing, and one-click replacement dispatch.
+8. **Damaged & Missing Management**:
+   - Live discrepancy monitoring, status filter tabs (`All`, `Pending`, `Replaced`), and resolution workflows.
+9. **Low Stock & Out of Stock Monitoring**:
+   - Automated threshold monitoring and immediate restock redirection.
+10. **Analytics & Business Intelligence**:
+    - 7 live interactive database charts powered by Recharts (Category breakdown, stock status distribution, order timelines, top ordered items, damaged vs. missing rates, restocking trends).
+
+---
+
+## 🧪 Comprehensive Testing Suite
+
+StockFlow WMS includes a comprehensive automated test suite spanning **Unit Tests**, **Component Tests**, **Page Integration Tests**, and **End-to-End (E2E) Tests** with **80%+ code coverage** on critical paths.
+
+### 📊 Testing Architecture
 
 ```
-project 1/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI server entry point
-│   │   ├── config.py            # Environment & app settings
-│   │   ├── database.py          # SQLAlchemy session setup
-│   │   ├── models/              # Project and Material DB models
-│   │   ├── schemas/             # Pydantic schema validation
-│   │   ├── api/                 # REST endpoints (/projects, /materials, /simulations/analyze)
-│   │   └── ai/                  # AI diagnostic service & fallback engine
-│   ├── requirements.txt
-│   └── .env.example
-│
-├── frontend/
-│   ├── src/
-│   │   ├── types/               # Physics, Component, Telemetry types
-│   │   ├── physics/             # RapierManager WASM integration
-│   │   ├── three/               # Viewport, lighting, gizmo controller
-│   │   ├── state/               # Simulator store hook & undo/redo
-│   │   ├── components/          # Toolbar, ComponentLibrary, Inspector, TelemetryPanel, Modals
-│   │   ├── pages/               # LandingPage & SimulatorPage
-│   │   ├── services/            # API client with offline fallback
-│   │   └── utils/               # Materials, Presets, Exporters, Analytical verifier
-│   ├── package.json
-│   └── vite.config.ts
-│
-└── README.md
+frontend/
+├── src/
+│   ├── __tests__/
+│   │   ├── unit/
+│   │   │   ├── businessLogic.test.ts    # Stock math, status formulas, quality rules
+│   │   │   ├── apiService.test.ts       # All 16 API endpoints + offline local storage sync
+│   │   │   └── authContext.test.tsx     # Session management, JWT tokens, login/logout
+│   │   ├── components/
+│   │   │   ├── Header.test.tsx          # Title, search input, actions slot
+│   │   │   ├── StatCard.test.tsx        # Metric counters, color variants
+│   │   │   ├── StockBadge.test.tsx      # In-stock, low-stock, out-of-stock styles
+│   │   │   ├── ProductImage.test.tsx    # Remote images, fallbacks, broken URL recovery
+│   │   │   ├── Navbar.test.tsx          # Branding, user pill, notifications
+│   │   │   ├── Sidebar.test.tsx         # Module navigation links & active route highlights
+│   │   │   ├── NotificationsPopover.test.tsx # Stock alert notifications drawer
+│   │   │   └── PriorityBadge.test.tsx   # Dynamic order prioritization badges
+│   │   └── pages/
+│   │       ├── Dashboard.test.tsx       # Hub cards & metric loading
+│   │       ├── Inventory.test.tsx       # Available stock view & category filters
+│   │       ├── WarehouseStatus.test.tsx # Catalog grid, add product, delete SKU
+│   │       ├── OrderPlacement.test.tsx  # Direct quantity input & order placement
+│   │       ├── Orders.test.tsx          # Priority queue, accept order, status filter
+│   │       ├── OrderTracking.test.tsx   # Quality verification, replacement, shipment
+│   │       ├── DamagedMissing.test.tsx  # Issue records, status filters, quick replace
+│   │       ├── Restocking.test.tsx      # Stock injection & audit history table
+│   │       ├── LowStock.test.tsx        # Threshold alerts & out-of-stock monitor
+│   │       └── Analysis.test.tsx        # KPI charts & database analytics
+│   └── test/
+│       └── setup.ts                     # Jest-DOM matchers, DOM mocks, localStorage resets
+├── e2e/
+│   ├── navigation.spec.ts               # Core app routing & hub navigation
+│   ├── inventory.spec.ts                # Search & category filters
+│   ├── order-lifecycle.spec.ts          # Order placement -> queue -> tracking -> shipment
+│   └── product-management.spec.ts       # SKU registration & catalog management
+├── vitest.config.ts                     # Vitest runner + v8 coverage configuration
+└── playwright.config.ts                 # Playwright E2E configuration
+```
+
+### 🚀 Running the Tests
+
+#### 1. Run Frontend Unit, Component & Integration Tests
+```bash
+# In the root or frontend directory:
+npm test
+# Or with hot-reload watch mode:
+npm run test:watch
+```
+
+#### 2. Run Code Coverage Report (Target: 80%+)
+```bash
+npm run test:coverage
+```
+
+#### 3. Run Backend Pytest Suite
+```bash
+# Windows PowerShell:
+set PYTHONPATH=backend && python -m pytest backend/tests/test_wms.py -v
+
+# Linux/macOS:
+PYTHONPATH=backend python -m pytest backend/tests/test_wms.py -v
+```
+
+#### 4. Run End-to-End Tests (Playwright)
+```bash
+npm run test:e2e
 ```
 
 ---
@@ -71,41 +110,29 @@ project 1/
 ## 🚀 Local Development Setup
 
 ### Prerequisites
-
 - Node.js (v18+) & npm
 - Python (3.10+)
 
 ### 1. Frontend Setup
-
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
 Open `http://localhost:3000` in your browser.
 
 ### 2. Backend Setup
-
 ```bash
 cd backend
 python -m venv .venv
-# On Windows PowerShell: .venv\Scripts\Activate
+# On Windows: .venv\Scripts\Activate
 # On Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
-
-Backend API documentation will be accessible at `http://127.0.0.1:8000/docs`.
+Backend API interactive Swagger docs are available at `http://127.0.0.1:8000/docs`.
 
 ---
 
-## 🔬 Physics Engine & Analytical Verification
-
-The simulator uses Rapier 3D WASM for numerical integration. Simulated trajectories can be verified against analytical mechanics formulas:
-
-- **Free Fall**: $y(t) = y_0 - \frac{1}{2}g t^2$
-- **Projectile Motion**: $x(t) = v_{0x} t$
-- **Friction Deceleration**: $v(t) = v_0 - \mu g t$
-
-_Disclaimer_: PhysiLab 3D is designed for interactive prototyping, physics demonstration, and conceptual validation. It provides high-precision classical mechanics rigid-body numerical approximations, but does NOT replace full professional engineering CAE, FEA stress analysis, or official safety certification software.
+## 🔒 Offline Resilience & Synchronization
+StockFlow WMS features an intelligent offline sync layer in `frontend/src/services/api.ts` with comprehensive local storage caching. All 24 catalog products, restocks, orders, and damaged/missing records operate without disruption even when the backend API is disconnected or starting up.

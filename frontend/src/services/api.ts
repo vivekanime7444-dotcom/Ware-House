@@ -23,13 +23,10 @@ const STORAGE_KEYS = {
 function getLocal<T>(key: string, defaultData: T): T {
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) {
-      localStorage.setItem(key, JSON.stringify(defaultData));
-      return defaultData;
-    }
+    if (!raw) return JSON.parse(JSON.stringify(defaultData));
     return JSON.parse(raw);
   } catch {
-    return defaultData;
+    return JSON.parse(JSON.stringify(defaultData));
   }
 }
 

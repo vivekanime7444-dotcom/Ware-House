@@ -26,6 +26,9 @@ backend/test_wms.db
 node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/coverage/
+coverage/
+
 
 # IDE
 .vscode/

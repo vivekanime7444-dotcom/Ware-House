@@ -5,6 +5,12 @@
   "scripts": {
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm install && npm run build",
-    "vercel-build": "cd frontend && npm install && npm run build"
+    "vercel-build": "cd frontend && npm install && npm run build",
+    "test": "npm --prefix frontend test",
+    "test:frontend": "npm --prefix frontend test",
+    "test:backend": "set PYTHONPATH=backend && python -m pytest backend/tests/test_wms.py",
+    "test:coverage": "npm --prefix frontend run test:coverage",
+    "test:e2e": "npm --prefix frontend run test:e2e"
   }
 }
+
