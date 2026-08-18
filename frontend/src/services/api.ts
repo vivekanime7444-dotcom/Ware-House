@@ -546,13 +546,21 @@ export const api = {
     }
   },
 
-  async replaceDamagedMissing(orderId: number, productId: number, quantity: number): Promise<{ message: string }> {
+  async replaceDamagedMissing(
+    orderId: number,
+    productId: number,
+    quantity: number,
+    damagedCount?: number,
+    missingCount?: number
+  ): Promise<{ message: string }> {
     // 1. Update local state
     const prods = getLocal<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-    const dmRecords = getLocal<DamageMissingRecord[]>(STORAGE_KEYS.DAMAGED_MISSING, INITIAL_DAMAGED_MISSING);
-    
-    // Deduct physical replacement from inventory
+    const orders = getLocal<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+    let dmRecords = getLocal<DamageMissingRecord[]>(STORAGE_KEYS.DAMAGED_MISSING, INITIAL_DAMAGED_MISSING);
+    const order = orders.find(o => o.id === orderId);
     const prod = prods.find(p => p.id === productId);
+
+    // Deduct physical replacement from inventory
     if (prod) {
       prod.quantity = Math.max(0, prod.quantity - quantity);
       prod.available_quantity = Math.max(0, prod.quantity - prod.reserved_quantity);
@@ -560,12 +568,33 @@ export const api = {
       setLocal(STORAGE_KEYS.PRODUCTS, [...prods]);
     }
 
-    // Mark damage record as REPLACED
-    const targetDm = dmRecords.find(d => d.order_id === orderId && d.product_id === productId);
+    // Find existing or create new DamageMissingRecord
+    let targetDm = dmRecords.find(d => d.order_id === orderId && d.product_id === productId);
+    const dmg = damagedCount !== undefined ? damagedCount : (targetDm ? targetDm.damaged_quantity : quantity);
+    const mss = missingCount !== undefined ? missingCount : (targetDm ? targetDm.missing_quantity : 0);
+
     if (targetDm) {
       targetDm.status = "REPLACED";
-      setLocal(STORAGE_KEYS.DAMAGED_MISSING, [...dmRecords]);
+      if (damagedCount !== undefined) targetDm.damaged_quantity = damagedCount;
+      if (missingCount !== undefined) targetDm.missing_quantity = missingCount;
+    } else {
+      targetDm = {
+        id: Date.now() + productId,
+        order_id: orderId,
+        order_number: order?.order_number || `ORD-${orderId}`,
+        product_id: productId,
+        product_name: prod?.name || "Product",
+        product_code: prod?.product_code || "CODE",
+        product_image: prod?.image_url,
+        category_name: prod?.category_name || "General",
+        damaged_quantity: dmg,
+        missing_quantity: mss,
+        status: "REPLACED",
+        created_at: new Date().toISOString()
+      };
+      dmRecords = [targetDm, ...dmRecords];
     }
+    setLocal(STORAGE_KEYS.DAMAGED_MISSING, dmRecords);
 
     // 2. Call backend
     try {
@@ -576,9 +605,10 @@ export const api = {
       });
       return await handleResponse(res);
     } catch {
-      return { message: `Replaced ${quantity} units from inventory successfully` };
+      return { message: `Successfully replaced ${quantity} units of ${prod?.name || "product"} from inventory` };
     }
   },
+
 
   async shipOrder(orderId: number): Promise<Order> {
     const orders = getLocal<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);

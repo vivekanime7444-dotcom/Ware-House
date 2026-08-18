@@ -126,15 +126,32 @@ export const OrderTracking: React.FC = () => {
     }
   };
 
-  const handleReplace = async (productId: number, requiredQty: number) => {
+  const handleReplace = async (productId: number, requiredQty: number, damagedQty?: number, missingQty?: number) => {
     if (!selectedOrder) return;
     try {
       setErrorMsg(null);
       setSuccessMsg(null);
       setReplacingId(productId);
 
-      const res = await api.replaceDamagedMissing(selectedOrder.id, productId, requiredQty);
+      const inp = verifInputs[productId] || { good: 0, damaged: 0, missing: 0 };
+      const dmg = damagedQty !== undefined ? damagedQty : inp.damaged;
+      const mss = missingQty !== undefined ? missingQty : inp.missing;
+
+      const res = await api.replaceDamagedMissing(selectedOrder.id, productId, requiredQty, dmg, mss);
       setSuccessMsg(res.message);
+
+      // Restore good quantity to expected in input map since units are replaced
+      const orderItem = selectedOrder.items.find((i) => i.product_id === productId);
+      if (orderItem) {
+        setVerifInputs((prev) => ({
+          ...prev,
+          [productId]: {
+            good: orderItem.quantity,
+            damaged: 0,
+            missing: 0,
+          },
+        }));
+      }
 
       await loadAccepted();
       if (selectedOrder) await loadSummary(selectedOrder.id);
@@ -144,6 +161,7 @@ export const OrderTracking: React.FC = () => {
       setReplacingId(null);
     }
   };
+
 
   const handleShip = async () => {
     if (!selectedOrder) return;
@@ -340,10 +358,11 @@ export const OrderTracking: React.FC = () => {
                                 {totalNeededReplacement} replacement units needed
                               </span>
                               <button
-                                onClick={() => handleReplace(item.product_id, totalNeededReplacement)}
+                                onClick={() => handleReplace(item.product_id, totalNeededReplacement, inp.damaged, inp.missing)}
                                 disabled={replacingId === item.product_id}
                                 className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition-all disabled:opacity-40"
                               >
+
                                 {replacingId === item.product_id ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 ) : (

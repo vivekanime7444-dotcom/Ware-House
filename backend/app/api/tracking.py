@@ -222,13 +222,23 @@ def replace_damaged_missing(
     )
     db.add(rep)
 
-    # Update damage record status
+    # Update or create damage record status
     dm = db.query(DamageMissingRecord).filter(
         DamageMissingRecord.order_id == order_id,
         DamageMissingRecord.product_id == product.id
     ).first()
     if dm:
         dm.status = "REPLACED"
+    else:
+        dm = DamageMissingRecord(
+            order_id=order_id,
+            product_id=product.id,
+            damaged_quantity=payload.replacement_quantity,
+            missing_quantity=0,
+            status="REPLACED",
+            created_at=datetime.now(timezone.utc)
+        )
+        db.add(dm)
 
     audit = AuditLog(
         action="REPLACE_STOCK",
@@ -240,6 +250,7 @@ def replace_damaged_missing(
         details=f"Issued {payload.replacement_quantity} replacement units of '{product.name}' for Order #{order.order_number}."
     )
     db.add(audit)
+
 
     db.commit()
 
