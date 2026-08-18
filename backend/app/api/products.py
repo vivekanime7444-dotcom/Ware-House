@@ -163,6 +163,8 @@ def update_product(
 
     return format_product_out(p)
 
+from sqlalchemy.exc import IntegrityError
+
 @router.delete("/{product_id}")
 def delete_product(
     product_id: int,
@@ -175,8 +177,16 @@ def delete_product(
 
     product_name = p.name
     product_code = p.product_code
-    db.delete(p)
-    db.commit()
+    
+    try:
+        db.delete(p)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete '{product_name}' because it is linked to existing orders or restock history."
+        )
 
     audit = AuditLog(
         action="DELETE_PRODUCT",
