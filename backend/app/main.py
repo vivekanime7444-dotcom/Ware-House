@@ -10,14 +10,22 @@ from app.seed import seed_database
 
 
 # Initialize DB tables on startup
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"[WARN] DB table creation failed: {e}")
 
 # Auto-seed database if empty
-db = SessionLocal()
 try:
+    db = SessionLocal()
     seed_database(db)
-finally:
     db.close()
+except Exception as e:
+    print(f"[WARN] DB seeding failed: {e}")
+    try:
+        db.close()
+    except Exception:
+        pass
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -54,3 +62,4 @@ def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+

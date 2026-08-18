@@ -11,9 +11,11 @@ build/
 venv/
 env/
 
-# SQLite databases
-*.db
+# SQLite databases (wms.db is intentionally tracked for Vercel deployment)
 *.sqlite
+# simulator.db and test_wms.db are dev-only
+backend/simulator.db
+backend/test_wms.db
 
 # Environment
 .env
