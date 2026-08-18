@@ -93,16 +93,17 @@ export const DamagedMissing: React.FC = () => {
 
         {/* Action Feedback Banner */}
         {actionMsg && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs flex items-center justify-between gap-3 shadow-xs">
+          <div role="alert" aria-live="polite" className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs flex items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
               <span className="font-bold">{actionMsg}</span>
             </div>
-            <button onClick={() => setActionMsg(null)} className="text-emerald-700 font-bold hover:underline">
+            <button onClick={() => setActionMsg(null)} aria-label="Dismiss feedback message" className="text-emerald-700 font-bold hover:underline">
               Dismiss
             </button>
           </div>
         )}
+
 
         {/* Audit Log / List Section */}
         <section className="bg-[#b2eddb]/40 border border-[#5dd5ae] rounded-3xl p-6 space-y-5 shadow-sm">

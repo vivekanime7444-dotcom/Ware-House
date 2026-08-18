@@ -104,20 +104,21 @@ export const Restocking: React.FC = () => {
             />
           </div>
 
-          {/* Feedback messages */}
+          {/* Feedback Banners */}
           {successMsg && (
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div role="alert" aria-live="polite" className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
               <span className="font-bold">{successMsg}</span>
             </div>
           )}
 
           {errorMsg && (
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <div role="alert" aria-live="polite" className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" aria-hidden="true" />
               <span className="font-bold">{errorMsg}</span>
             </div>
           )}
+
 
           {/* Selected Product Restock Form Panel */}
           {selectedProduct ? (

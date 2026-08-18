@@ -31,11 +31,14 @@ export const Header: React.FC<PageHeaderProps> = ({
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              role="searchbox"
+              aria-label={searchPlaceholder}
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder}
               className="pl-8 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 transition-all w-64 shadow-xs"
             />
+
           </div>
         )}
         {actions}

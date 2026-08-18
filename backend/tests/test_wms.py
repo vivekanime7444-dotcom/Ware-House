@@ -207,3 +207,32 @@ def test_7_analytics_and_damaged_missing():
     res_dm = client.get("/api/damaged-missing", headers=headers)
     assert res_dm.status_code == 200
     assert "summary" in res_dm.json()
+
+def test_8_security_and_rbac_enforcement():
+    token = get_auth_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 1. Negative quantity restock attempt must fail
+    res_neg_restock = client.post("/api/restocks", json={
+        "product_id": 1,
+        "quantity_added": -10
+    }, headers=headers)
+    assert res_neg_restock.status_code in [400, 422]
+
+    # 2. Overselling protection: requesting 99999 units must be blocked
+    res_oversell = client.post("/api/orders", json={
+        "items": [{"product_id": 1, "quantity": 99999}]
+    }, headers=headers)
+    assert res_oversell.status_code == 400
+    assert "Insufficient available stock" in res_oversell.json()["detail"]
+
+    # 3. Missing auth token must return 401
+    res_no_auth = client.post("/api/products", json={
+        "product_code": "SEC-001",
+        "name": "Unauthorized Product",
+        "category_id": 1,
+        "quantity": 10,
+        "low_stock_threshold": 5
+    })
+    assert res_no_auth.status_code == 401
+

@@ -37,19 +37,30 @@ export const NotificationsPopover: React.FC = () => {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-label={`Stock alerts: ${totalAlerts} items require attention`}
         className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
         title="Notifications"
       >
         <Bell className="w-5 h-5" />
         {totalAlerts > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+          <span
+            aria-live="polite"
+            className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse"
+          >
             {totalAlerts}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4">
+        <div
+          role="dialog"
+          aria-label="Stock Alert Notifications Drawer"
+          className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4"
+        >
+
           <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
             <h4 className="font-semibold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
               <Bell className="w-4 h-4 text-indigo-600" />

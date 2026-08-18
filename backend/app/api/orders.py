@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Order, OrderItem, Product, User, AuditLog
 from app.schemas import OrderCreate, OrderOut, OrderItemOut
-from app.auth import get_current_user
+from app.auth import get_current_user, require_roles
 from datetime import datetime, timezone
 
+
 router = APIRouter(prefix="/api/orders", tags=["Orders"])
+
 
 def calculate_order_priority(order: Order) -> tuple[float, str]:
     if not order.items:
@@ -179,8 +181,9 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
 def accept_order(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles(["admin", "manager", "operator"]))
 ):
+
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")

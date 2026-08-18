@@ -20,9 +20,14 @@ export const StockBadge: React.FC<StockBadgeProps> = ({ status, size = "md" }) =
   const textSize = size === "sm" ? "text-xs px-2.5 py-0.5" : "text-xs px-3 py-1";
 
   return (
-    <span className={`inline-flex items-center gap-1.5 font-bold rounded-full border ${badgeStyle} ${textSize}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${dotStyle}`}></span>
+    <span
+      role="status"
+      aria-label={`Stock status: ${status}`}
+      className={`inline-flex items-center gap-1.5 font-bold rounded-full border ${badgeStyle} ${textSize}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${dotStyle}`} aria-hidden="true"></span>
       {status}
     </span>
   );
 };
+

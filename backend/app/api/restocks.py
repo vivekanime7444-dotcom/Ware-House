@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Product, RestockTransaction, User, AuditLog
 from app.schemas import RestockCreate, RestockOut
-from app.auth import get_current_user
+from app.auth import get_current_user, require_roles
 from datetime import datetime, timezone
+
 
 router = APIRouter(prefix="/api/restocks", tags=["Restocking"])
 
@@ -13,8 +14,9 @@ router = APIRouter(prefix="/api/restocks", tags=["Restocking"])
 def restock_product(
     item: RestockCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles(["admin", "manager", "staff"]))
 ):
+
     if item.quantity_added <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -179,28 +179,29 @@ export const WarehouseStatus: React.FC = () => {
 
         {/* Global Feedback Banners */}
         {alertSuccess && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs flex items-center justify-between shadow-xs">
+          <div role="alert" aria-live="polite" className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
               <span className="font-bold">{alertSuccess}</span>
             </div>
-            <button onClick={() => setAlertSuccess(null)} className="text-emerald-600 hover:text-emerald-800 font-bold">
+            <button onClick={() => setAlertSuccess(null)} aria-label="Dismiss success message" className="text-emerald-600 hover:text-emerald-800 font-bold">
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {alertError && (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-center justify-between shadow-xs">
+          <div role="alert" aria-live="polite" className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2.5">
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" aria-hidden="true" />
               <span className="font-bold">{alertError}</span>
             </div>
-            <button onClick={() => setAlertError(null)} className="text-rose-600 hover:text-rose-800 font-bold">
+            <button onClick={() => setAlertError(null)} aria-label="Dismiss error message" className="text-rose-600 hover:text-rose-800 font-bold">
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
+
 
         {/* Category Tab Bar & Action Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

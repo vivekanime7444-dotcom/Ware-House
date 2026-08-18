@@ -74,3 +74,17 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
             detail="User not found",
         )
     return user
+
+def require_roles(allowed_roles: list[str]):
+    """Role-Based Access Control (RBAC) dependency factory."""
+    def role_checker(current_user: User = Depends(get_current_user)) -> User:
+        user_role = (current_user.role or "staff").lower()
+        normalized_allowed = [r.lower() for r in allowed_roles]
+        if user_role not in normalized_allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied. Requires one of roles: {', '.join(allowed_roles)}. Current role: {current_user.role}"
+            )
+        return current_user
+    return role_checker
+

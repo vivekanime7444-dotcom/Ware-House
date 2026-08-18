@@ -41,10 +41,14 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       onClick={onClick}
+      role={onClick ? "button" : "region"}
+      aria-label={`${title}: ${value}`}
+      tabIndex={onClick ? 0 : undefined}
       className={`p-5 rounded-2xl border shadow-sm transition-all duration-200 ${cardBgStyles[color]} ${
         onClick ? "cursor-pointer hover:-translate-y-1 hover:shadow-md" : ""
       }`}
     >
+
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">{title}</p>

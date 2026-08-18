@@ -10,9 +10,10 @@ from app.schemas import (
     OrderOut, OrderVerificationRequest, ReplacementRequest,
     OrderVerificationSummary, ItemVerificationOut
 )
-from app.auth import get_current_user
+from app.auth import get_current_user, require_roles
 from app.api.orders import format_order_out
 from datetime import datetime, timezone
+
 
 router = APIRouter(prefix="/api/tracking", tags=["Order Tracking & Verification"])
 
@@ -72,7 +73,7 @@ def verify_order_items(
     order_id: int,
     payload: OrderVerificationRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles(["admin", "manager", "operator", "staff"]))
 ):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
@@ -188,7 +189,7 @@ def replace_damaged_missing(
     order_id: int,
     payload: ReplacementRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles(["admin", "manager"]))
 ):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
@@ -263,8 +264,9 @@ def replace_damaged_missing(
 def ship_order(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles(["admin", "manager", "operator"]))
 ):
+
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")

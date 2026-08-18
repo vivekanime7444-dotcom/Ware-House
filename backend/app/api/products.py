@@ -4,8 +4,11 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Product, Category, User, AuditLog
 from app.schemas import ProductOut, ProductCreate, ProductUpdate, CategoryOut
-from app.auth import get_current_user
+from app.auth import get_current_user, require_roles
 from datetime import datetime, timezone
+
+
+
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
 
@@ -86,7 +89,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 def create_product(
     item: ProductCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles(["admin", "manager"]))
 ):
     existing = db.query(Product).filter(Product.product_code == item.product_code).first()
     if existing:
@@ -128,7 +131,7 @@ def update_product(
     product_id: int,
     item: ProductUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles(["admin", "manager"]))
 ):
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
@@ -169,8 +172,9 @@ from sqlalchemy.exc import IntegrityError
 def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles(["admin"]))
 ):
+
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Product not found")
