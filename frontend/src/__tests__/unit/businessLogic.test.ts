@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { Product, Order, OrderItem } from '../../types';
+import type { Product, OrderItem } from '../../types';
+
 
 describe('Warehouse Business Logic & Calculations', () => {
   describe('Stock Availability & Status Rules', () => {

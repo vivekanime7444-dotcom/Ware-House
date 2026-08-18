@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { api } from '../../services/api';
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '../../services/mockData';
+import { INITIAL_CATEGORIES } from '../../services/mockData';
+
+
 
 describe('API Service Unit Tests', () => {
   beforeEach(() => {

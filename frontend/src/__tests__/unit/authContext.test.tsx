@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import React from 'react';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../context/AuthContext';
 
-const TestAuthConsumer: React.FC = () => {
+const TestAuthConsumer = () => {
+
   const { user, loading, login, logout } = useAuth();
 
   return (

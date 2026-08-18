@@ -34,11 +34,13 @@ globalThis.IntersectionObserver = class IntersectionObserver {
   readonly root = null;
   readonly rootMargin = '';
   readonly thresholds = [];
+  readonly scrollMargin = '';
   observe = vi.fn();
   unobserve = vi.fn();
   disconnect = vi.fn();
   takeRecords = vi.fn().mockReturnValue([]);
-};
+} as unknown as typeof IntersectionObserver;
+
 
 // Mock scrollTo
 window.scrollTo = vi.fn();

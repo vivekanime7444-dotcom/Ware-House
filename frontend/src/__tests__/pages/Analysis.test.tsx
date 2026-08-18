@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Analysis } from '../../pages/Analysis';

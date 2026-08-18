@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
 import { NotificationsPopover } from '../../components/NotificationsPopover';
 import { AuthProvider } from '../../context/AuthContext';
 
