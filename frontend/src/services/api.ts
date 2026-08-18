@@ -428,11 +428,15 @@ export const api = {
       const res = await fetch(`${API_BASE_URL}/tracking/accepted`, {
         headers: getAuthHeader(),
       });
-      return await handleResponse(res);
-    } catch {
-      const orders = getLocal<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
-      return orders.filter(o => o.status === "ACCEPTED" || o.status === "PROCESSING");
+      const orders = await handleResponse<Order[]>(res);
+      if (orders && orders.length > 0) {
+        return orders;
+      }
+    } catch (err) {
+      console.warn("Using local accepted orders", err);
     }
+    const orders = getLocal<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+    return orders.filter(o => o.status === "ACCEPTED" || o.status === "PROCESSING");
   },
 
   async getVerificationSummary(orderId: number): Promise<OrderVerificationSummary> {
@@ -443,29 +447,44 @@ export const api = {
       return await handleResponse(res);
     } catch {
       const orders = getLocal<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+      const dmRecords = getLocal<DamageMissingRecord[]>(STORAGE_KEYS.DAMAGED_MISSING, INITIAL_DAMAGED_MISSING);
       const order = orders.find(o => o.id === orderId) || orders[0];
-      const verifs = order.items.map((it, idx) => ({
-        id: idx + 1,
-        order_id: order.id,
-        product_id: it.product_id,
-        product_name: it.product_name,
-        product_image: it.product_image,
-        expected_quantity: it.quantity,
-        good_quantity: it.quantity,
-        damaged_quantity: 0,
-        missing_quantity: 0,
-        is_verified: true,
-        verified_at: new Date().toISOString()
-      }));
+      
+      const orderDm = dmRecords.filter(d => d.order_id === order.id);
+      const totalDamaged = orderDm.reduce((acc, d) => acc + d.damaged_quantity, 0);
+      const totalMissing = orderDm.reduce((acc, d) => acc + d.missing_quantity, 0);
+
+      const verifs = order.items.map((it, idx) => {
+        const dm = orderDm.find(d => d.product_id === it.product_id);
+        const damaged = dm ? dm.damaged_quantity : 0;
+        const missing = dm ? dm.missing_quantity : 0;
+        const good = Math.max(0, it.quantity - damaged - missing);
+        return {
+          id: idx + 1,
+          order_id: order.id,
+          product_id: it.product_id,
+          product_name: it.product_name,
+          product_image: it.product_image,
+          expected_quantity: it.quantity,
+          good_quantity: good,
+          damaged_quantity: damaged,
+          missing_quantity: missing,
+          is_verified: true,
+          verified_at: new Date().toISOString()
+        };
+      });
+
+      const replacementNeeded = orderDm.filter(d => d.status !== "REPLACED").reduce((acc, d) => acc + d.damaged_quantity + d.missing_quantity, 0);
+
       return {
         order_id: order.id,
         order_number: order.order_number,
         status: order.status,
         verifications: verifs,
-        total_damaged: 0,
-        total_missing: 0,
-        replacement_needed: 0,
-        can_ship: true
+        total_damaged: totalDamaged,
+        total_missing: totalMissing,
+        replacement_needed: replacementNeeded,
+        can_ship: replacementNeeded === 0
       };
     }
   },
@@ -474,6 +493,47 @@ export const api = {
     orderId: number,
     items: { product_id: number; good_quantity: number; damaged_quantity: number; missing_quantity: number }[]
   ): Promise<{ message: string }> {
+    // 1. Sync local state first so UI updates immediately
+    const orders = getLocal<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+    const prods = getLocal<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    let dmRecords = getLocal<DamageMissingRecord[]>(STORAGE_KEYS.DAMAGED_MISSING, INITIAL_DAMAGED_MISSING);
+    const order = orders.find(o => o.id === orderId);
+
+    if (order) {
+      order.status = "PROCESSING";
+      order.updated_at = new Date().toISOString();
+      setLocal(STORAGE_KEYS.ORDERS, [...orders]);
+
+      items.forEach(item => {
+        const prod = prods.find(p => p.id === item.product_id);
+        const hasIssue = item.damaged_quantity > 0 || item.missing_quantity > 0;
+        
+        // Remove existing record for this order & product
+        dmRecords = dmRecords.filter(d => !(d.order_id === orderId && d.product_id === item.product_id));
+
+        if (hasIssue) {
+          const newDm: DamageMissingRecord = {
+            id: Date.now() + item.product_id,
+            order_id: orderId,
+            order_number: order.order_number,
+            product_id: item.product_id,
+            product_name: prod?.name || "Product",
+            product_code: prod?.product_code || "CODE",
+            product_image: prod?.image_url,
+            category_name: prod?.category_name || "General",
+            damaged_quantity: item.damaged_quantity,
+            missing_quantity: item.missing_quantity,
+            status: "REPORTED",
+            created_at: new Date().toISOString()
+          };
+          dmRecords.unshift(newDm);
+        }
+      });
+
+      setLocal(STORAGE_KEYS.DAMAGED_MISSING, dmRecords);
+    }
+
+    // 2. Also send to backend if available
     try {
       const res = await fetch(`${API_BASE_URL}/tracking/${orderId}/verify`, {
         method: "POST",
@@ -482,11 +542,32 @@ export const api = {
       });
       return await handleResponse(res);
     } catch {
-      return { message: "Order items verified successfully (local mode)" };
+      return { message: "Order verification recorded successfully" };
     }
   },
 
   async replaceDamagedMissing(orderId: number, productId: number, quantity: number): Promise<{ message: string }> {
+    // 1. Update local state
+    const prods = getLocal<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    const dmRecords = getLocal<DamageMissingRecord[]>(STORAGE_KEYS.DAMAGED_MISSING, INITIAL_DAMAGED_MISSING);
+    
+    // Deduct physical replacement from inventory
+    const prod = prods.find(p => p.id === productId);
+    if (prod) {
+      prod.quantity = Math.max(0, prod.quantity - quantity);
+      prod.available_quantity = Math.max(0, prod.quantity - prod.reserved_quantity);
+      prod.status = prod.available_quantity <= 0 ? "OUT OF STOCK" : prod.available_quantity <= prod.low_stock_threshold ? "LOW STOCK" : "IN STOCK";
+      setLocal(STORAGE_KEYS.PRODUCTS, [...prods]);
+    }
+
+    // Mark damage record as REPLACED
+    const targetDm = dmRecords.find(d => d.order_id === orderId && d.product_id === productId);
+    if (targetDm) {
+      targetDm.status = "REPLACED";
+      setLocal(STORAGE_KEYS.DAMAGED_MISSING, [...dmRecords]);
+    }
+
+    // 2. Call backend
     try {
       const res = await fetch(`${API_BASE_URL}/tracking/${orderId}/replace`, {
         method: "POST",
@@ -495,11 +576,19 @@ export const api = {
       });
       return await handleResponse(res);
     } catch {
-      return { message: `Replaced ${quantity} units from inventory` };
+      return { message: `Replaced ${quantity} units from inventory successfully` };
     }
   },
 
   async shipOrder(orderId: number): Promise<Order> {
+    const orders = getLocal<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+    const ord = orders.find(o => o.id === orderId);
+    if (ord) {
+      ord.status = "SHIPPED";
+      ord.updated_at = new Date().toISOString();
+      setLocal(STORAGE_KEYS.ORDERS, [...orders]);
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/tracking/${orderId}/ship`, {
         method: "POST",
@@ -507,13 +596,6 @@ export const api = {
       });
       return await handleResponse(res);
     } catch {
-      const orders = getLocal<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
-      const ord = orders.find(o => o.id === orderId);
-      if (ord) {
-        ord.status = "SHIPPED";
-        ord.updated_at = new Date().toISOString();
-        setLocal(STORAGE_KEYS.ORDERS, [...orders]);
-      }
       return ord || orders[0];
     }
   },
@@ -527,22 +609,32 @@ export const api = {
       const res = await fetch(`${API_BASE_URL}/damaged-missing`, {
         headers: getAuthHeader(),
       });
-      return await handleResponse(res);
-    } catch {
-      const records = getLocal<DamageMissingRecord[]>(STORAGE_KEYS.DAMAGED_MISSING, INITIAL_DAMAGED_MISSING);
-      const totalDamaged = records.reduce((acc, r) => acc + r.damaged_quantity, 0);
-      const totalMissing = records.reduce((acc, r) => acc + r.missing_quantity, 0);
-      return {
-        summary: {
-          total_damaged: totalDamaged,
-          total_missing: totalMissing,
-          total_affected: totalDamaged + totalMissing,
-          record_count: records.length
-        },
-        records
-      };
+      const data = await handleResponse<{
+        summary: { total_damaged: number; total_missing: number; total_affected: number; record_count: number };
+        records: DamageMissingRecord[];
+      }>(res);
+      if (data && data.records && data.records.length > 0) {
+        setLocal(STORAGE_KEYS.DAMAGED_MISSING, data.records);
+        return data;
+      }
+    } catch (err) {
+      console.warn("Using local damaged missing records", err);
     }
+
+    const records = getLocal<DamageMissingRecord[]>(STORAGE_KEYS.DAMAGED_MISSING, INITIAL_DAMAGED_MISSING);
+    const totalDamaged = records.reduce((acc, r) => acc + r.damaged_quantity, 0);
+    const totalMissing = records.reduce((acc, r) => acc + r.missing_quantity, 0);
+    return {
+      summary: {
+        total_damaged: totalDamaged,
+        total_missing: totalMissing,
+        total_affected: totalDamaged + totalMissing,
+        record_count: records.length
+      },
+      records
+    };
   },
+
 
   // Analytics & Dashboard
   async getDashboardSummary(): Promise<DashboardSummary> {
